@@ -2,11 +2,11 @@
     "answers": [
         {
             "qid": 1,
-            "retrieve": 3
+            "retrieve": 1
         },
         {
             "qid": 2,
-            "retrieve": 3
+            "retrieve": 2
         }
     ]
 }

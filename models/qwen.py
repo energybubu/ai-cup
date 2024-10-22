@@ -1,61 +1,60 @@
-from typing import cast, List, Union, Tuple, Dict, Optional
+from typing import Dict, List, Tuple, Union
+
 import numpy as np
 import torch
-from tqdm import tqdm
 import transformers
-from transformers import AutoTokenizer, PreTrainedModel, PreTrainedTokenizer, DataCollatorWithPadding
+from tqdm import tqdm
+from transformers import DataCollatorWithPadding, PreTrainedModel, PreTrainedTokenizer
 from transformers.models.qwen2 import Qwen2Config, Qwen2ForSequenceClassification
 from transformers.trainer_pt_utils import LabelSmoother
+
 IGNORE_TOKEN_ID = LabelSmoother.ignore_index
+
 
 def preprocess(
     sources,
     tokenizer: transformers.PreTrainedTokenizer,
     max_len: int = 1024,
 ) -> Dict:
-
     # Apply prompt templates
     input_ids, attention_masks = [], []
     for i, source in enumerate(sources):
-        messages = [
-            {"role": "user",
-            "content": "\n\n".join(source)}
-        ]
-        text = tokenizer.apply_chat_template(messages, tokenize=False, add_generation_prompt=True)
+        messages = [{"role": "user", "content": "\n\n".join(source)}]
+        text = tokenizer.apply_chat_template(
+            messages, tokenize=False, add_generation_prompt=True
+        )
         model_inputs = tokenizer([text])
-        input_id = model_inputs['input_ids'][0]
-        attention_mask = model_inputs['attention_mask'][0]
+        input_id = model_inputs["input_ids"][0]
+        attention_mask = model_inputs["attention_mask"][0]
         if len(input_id) > max_len:
             ## last five tokens: <|im_end|>(151645), \n(198), <|im_start|>(151644), assistant(77091), \n(198)
             diff = len(input_id) - max_len
-            input_id = input_id[:-5-diff] + input_id[-5:]
-            attention_mask = attention_mask[:-5-diff] + attention_mask[-5:]
+            input_id = input_id[: -5 - diff] + input_id[-5:]
+            attention_mask = attention_mask[: -5 - diff] + attention_mask[-5:]
             assert len(input_id) == max_len
         input_ids.append(input_id)
         attention_masks.append(attention_mask)
 
-    return dict(
-        input_ids=input_ids,
-        attention_mask=attention_masks
-    )
+    return dict(input_ids=input_ids, attention_mask=attention_masks)
+
 
 class FlagRerankerCustom:
     def __init__(
-            self,
-            model: PreTrainedModel,
-            tokenizer: PreTrainedTokenizer,
-            use_fp16: bool = False
+        self,
+        model: PreTrainedModel,
+        tokenizer: PreTrainedTokenizer,
+        use_fp16: bool = False,
     ) -> None:
         self.tokenizer = tokenizer
         self.model = model
         self.data_collator = DataCollatorWithPadding(tokenizer=tokenizer)
 
         if torch.cuda.is_available():
-            self.device = torch.device('cuda')
+            self.device = torch.device("cuda")
         elif torch.backends.mps.is_available():
-            self.device = torch.device('mps')
+            self.device = torch.device("mps")
         else:
-            self.device = torch.device('cpu')
+            self.device = torch.device("cpu")
             use_fp16 = False
         if use_fp16:
             self.model.half()
@@ -70,9 +69,12 @@ class FlagRerankerCustom:
             self.model = torch.nn.DataParallel(self.model)
 
     @torch.no_grad()
-    def compute_score(self, sentence_pairs: Union[List[Tuple[str, str]], Tuple[str, str]], batch_size: int = 64,
-                      max_length: int = 1024) -> List[float]:
-        
+    def compute_score(
+        self,
+        sentence_pairs: Union[List[Tuple[str, str]], Tuple[str, str]],
+        batch_size: int = 64,
+        max_length: int = 1024,
+    ) -> List[float]:
         if self.num_gpus > 0:
             batch_size = batch_size * self.num_gpus
 
@@ -81,10 +83,15 @@ class FlagRerankerCustom:
             sentence_pairs = [sentence_pairs]
 
         all_scores = []
-        for start_index in tqdm(range(0, len(sentence_pairs), batch_size), desc="Compute Scores",
-                                disable=True):
-            sentences_batch = sentence_pairs[start_index:start_index + batch_size]
-            inputs = preprocess(sources=sentences_batch, tokenizer=self.tokenizer, max_len=max_length)
+        for start_index in tqdm(
+            range(0, len(sentence_pairs), batch_size),
+            desc="Compute Scores",
+            disable=True,
+        ):
+            sentences_batch = sentence_pairs[start_index : start_index + batch_size]
+            inputs = preprocess(
+                sources=sentences_batch, tokenizer=self.tokenizer, max_len=max_length
+            )
             inputs = [dict(zip(inputs, t)) for t in zip(*inputs.values())]
             inputs = self.data_collator(inputs).to(self.device)
             scores = self.model(**inputs, return_dict=True).logits
@@ -94,6 +101,7 @@ class FlagRerankerCustom:
         if len(all_scores) == 1:
             return all_scores[0]
         return all_scores
+
 
 def qwen_retrieve(qs, source, corpus_dict):
     tokenizer = transformers.AutoTokenizer.from_pretrained(
@@ -109,8 +117,8 @@ def qwen_retrieve(qs, source, corpus_dict):
 
     model = Qwen2ForSequenceClassification.from_pretrained(
         "neofung/LdIR-Qwen2-reranker-1.5B",
-        config = config,
-        trust_remote_code = True,
+        config=config,
+        trust_remote_code=True,
     )
 
     model = FlagRerankerCustom(model=model, tokenizer=tokenizer, use_fp16=True)
@@ -121,6 +129,7 @@ def qwen_retrieve(qs, source, corpus_dict):
     scores = model.compute_score(pairs)
     best_idx = np.argmax(scores)
     return source[best_idx]
+
 
 def qwen_rerank(
     qs_ref,

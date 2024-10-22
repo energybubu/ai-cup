@@ -6,6 +6,7 @@ import main_io
 from models.bm25_retrieve import bm25_rerank
 from models.cohere_retrieve import cohere_rerank
 from models.conan import conan_rerank
+from models.qwen import qwen_rerank
 
 
 def parse_arguments():
