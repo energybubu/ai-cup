@@ -1,0 +1,1 @@
+cohere_api_key = "AV6PesGgcgLCxmAXviLRyN5v1fCpHlDq8rDcRzSg"
