@@ -1,0 +1,24 @@
+{
+    "questions": [
+        {
+            "qid": 1,
+            "source": [
+                1,
+                2,
+                3
+            ],
+            "query": "匯款銀行及中間行所收取之相關費用由誰負擔?",
+            "category": "insurance"
+        },
+        {
+            "qid": 2,
+            "source": [
+                1,
+                2,
+                3
+            ],
+            "query": "本公司應在效力停止日前多少天以書面通知要保人？",
+            "category": "insurance"
+        }
+    ]
+}
