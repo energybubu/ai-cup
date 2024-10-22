@@ -42,25 +42,29 @@ def parse_arguments():
     return parser.parse_args()  # 解析參數
 
 
+def get_rerank_model(model_name: str):
+    """Get the model function based on the model name."""
+    if model_name == "bm25":
+        return bm25_rerank
+    if model_name == "cohere":
+        return cohere_rerank
+    if model_name == "conan":
+        return conan_rerank
+    if model_name == "qwen":
+        return qwen_rerank
+    if model_name == "zhinao":
+        return zhinao_rerank
+    raise ValueError(f"Model {model_name} is not supported.")
+
+
 def exp(exp_args: argparse.Namespace):
     """Main Experiment Function."""
     qs_ref, corpus_dict_insurance, corpus_dict_finance, key_to_source_dict = (
         io.parse_input(exp_args)
     )
-    if exp_args.model == "bm25":
-        model = bm25_rerank
-    elif exp_args.model == "cohere":
-        model = cohere_rerank
-    elif exp_args.model == "qwen":
-        model = qwen_rerank
-    elif exp_args.model == "conan":
-        model = conan_rerank
-    elif exp_args.model == "zhinao":
-        model = zhinao_rerank
-    else:
-        raise ValueError("Model not supported.")
+    rerank_model = get_rerank_model(exp_args.model)
 
-    answer_dict = model(
+    answer_dict = rerank_model(
         qs_ref, corpus_dict_insurance, corpus_dict_finance, key_to_source_dict
     )
     io.write_answer_to_json(exp_args, answer_dict)
