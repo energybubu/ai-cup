@@ -7,7 +7,7 @@ from models.bm25_retrieve import bm25_rerank
 from models.cohere_retrieve import cohere_rerank
 from models.conan import conan_rerank
 from models.qwen import qwen_rerank
-from models.zhinao import zhinao_rerank
+from models.zpoint import zpoint_rerank
 
 
 def parse_arguments():
@@ -46,14 +46,15 @@ def get_rerank_model(model_name: str):
     """Get the model function based on the model name."""
     if model_name == "bm25":
         return bm25_rerank
-    if model_name == "cohere":
+    elif model_name == "cohere":
         return cohere_rerank
-    if model_name == "conan":
+    elif model_name == "conan":
         return conan_rerank
-    if model_name == "qwen":
+    elif model_name == "qwen":
         return qwen_rerank
-    if model_name == "zhinao":
-        return zhinao_rerank
+    elif model_name == "zpoint":
+        return zpoint_rerank
+
     raise ValueError(f"Model {model_name} is not supported.")
 
 

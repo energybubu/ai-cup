@@ -2,6 +2,7 @@
 
 import torch
 from sentence_transformers import SentenceTransformer
+from tqdm import tqdm
 
 
 def conan_retrieve(query, source, corpus_dict):
@@ -31,7 +32,7 @@ def conan_rerank(
     """Conan Rerank Function."""
     answer_dict = {"answers": []}  # 初始化字典
 
-    for q_dict in qs_ref["questions"]:
+    for q_dict in tqdm(qs_ref["questions"]):
         if q_dict["category"] == "finance":
             # 進行檢索
             retrieved = conan_retrieve(

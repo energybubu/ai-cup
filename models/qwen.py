@@ -4,8 +4,13 @@ import numpy as np
 import torch
 import transformers
 from tqdm import tqdm
-from transformers import DataCollatorWithPadding, PreTrainedModel, PreTrainedTokenizer
-from transformers.models.qwen2 import Qwen2Config, Qwen2ForSequenceClassification
+from transformers import (
+    DataCollatorWithPadding,
+    PreTrainedModel,
+    PreTrainedTokenizer,
+    Qwen2Config,
+    Qwen2ForSequenceClassification,
+)
 from transformers.trainer_pt_utils import LabelSmoother
 
 from models.constant import max_seq_length
@@ -105,7 +110,22 @@ class FlagRerankerCustom:
         return all_scores
 
 
-def qwen_retrieve(qs, source, corpus_dict):
+def qwen_retrieve(model, qs, source, corpus_dict):
+    documents = [corpus_dict[id] for id in source]
+    pairs = [[qs, doc] for doc in documents]
+
+    scores = model.compute_score(pairs, max_length=2048)
+    best_idx = np.argmax(scores)
+    return source[best_idx]
+
+
+def qwen_rerank(
+    qs_ref,
+    corpus_dict_insurance,
+    corpus_dict_finance,
+    key_to_source_dict,
+):
+    answer_dict = {"answers": []}  # 初始化字典
     tokenizer = transformers.AutoTokenizer.from_pretrained(
         "neofung/LdIR-Qwen2-reranker-1.5B",
         padding_side="right",
@@ -127,34 +147,18 @@ def qwen_retrieve(qs, source, corpus_dict):
 
     model = FlagRerankerCustom(model=model, tokenizer=tokenizer, use_fp16=True)
 
-    documents = [corpus_dict[id] for id in source]
-    pairs = [[qs, doc] for doc in documents]
-
-    scores = model.compute_score(pairs, max_length=2048)
-    best_idx = np.argmax(scores)
-    return source[best_idx]
-
-
-def qwen_rerank(
-    qs_ref,
-    corpus_dict_insurance,
-    corpus_dict_finance,
-    key_to_source_dict,
-):
-    answer_dict = {"answers": []}  # 初始化字典
-
-    for q_dict in qs_ref["questions"]:
+    for q_dict in tqdm(qs_ref["questions"]):
         if q_dict["category"] == "finance":
             # 進行檢索
             retrieved = qwen_retrieve(
-                q_dict["query"], q_dict["source"], corpus_dict_finance
+                model, q_dict["query"], q_dict["source"], corpus_dict_finance
             )
             # 將結果加入字典
             answer_dict["answers"].append({"qid": q_dict["qid"], "retrieve": retrieved})
 
         elif q_dict["category"] == "insurance":
             retrieved = qwen_retrieve(
-                q_dict["query"], q_dict["source"], corpus_dict_insurance
+                model, q_dict["query"], q_dict["source"], corpus_dict_insurance
             )
             answer_dict["answers"].append({"qid": q_dict["qid"], "retrieve": retrieved})
 
@@ -165,7 +169,7 @@ def qwen_rerank(
                 if key in q_dict["source"]
             }
             retrieved = qwen_retrieve(
-                q_dict["query"], q_dict["source"], corpus_dict_faq
+                model, q_dict["query"], q_dict["source"], corpus_dict_faq
             )
             answer_dict["answers"].append({"qid": q_dict["qid"], "retrieve": retrieved})
 

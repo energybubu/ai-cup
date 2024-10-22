@@ -2,6 +2,7 @@
 
 import jieba  # 用於中文文本分詞
 from rank_bm25 import BM25Okapi  # 使用BM25演算法進行文件檢索
+from tqdm import tqdm
 
 
 # 根據查詢語句和指定的來源，檢索答案
@@ -34,7 +35,7 @@ def bm25_rerank(
     """BM25 Rerank Function."""
     answer_dict = {"answers": []}  # 初始化字典
 
-    for q_dict in qs_ref["questions"]:
+    for q_dict in tqdm(qs_ref["questions"]):
         if q_dict["category"] == "finance":
             # 進行檢索
             retrieved = bm25_retrieve(

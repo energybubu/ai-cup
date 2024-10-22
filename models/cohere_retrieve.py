@@ -1,6 +1,7 @@
 import time
 
 import cohere
+from tqdm import tqdm
 
 from models.constant import *
 
@@ -29,7 +30,7 @@ def cohere_rerank(
 ):
     answer_dict = {"answers": []}  # 初始化字典
 
-    for q_dict in qs_ref["questions"]:
+    for q_dict in tqdm(qs_ref["questions"]):
         if q_dict["category"] == "finance":
             # 進行檢索
             retrieved = cohere_retrieve(
