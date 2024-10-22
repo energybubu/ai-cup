@@ -3,7 +3,7 @@
 import argparse
 import main_io
 from models.bm25_retrieve import bm25_rerank
-from models.reranker import reranker
+from models.cohere_retrieve import cohere_rerank
 from models.qwen import qwen
 
 
@@ -39,8 +39,8 @@ def exp(exp_args: argparse.Namespace):
     )
     if exp_args.model == "bm25":
         model = bm25_rerank
-    elif exp_args.model == "reranker":
-        model = reranker
+    elif exp_args.model == "cohere":
+        model = cohere_rerank
     elif exp_args.model == "qwen":
         model = qwen
     else:
