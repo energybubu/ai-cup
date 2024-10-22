@@ -1,24 +1,25 @@
-import cohere
-from models.constant import *
 import time
+
+import cohere
+
+from models.constant import *
+
 
 def cohere_retrieve(qs, source, corpus_dict):
     co = cohere.ClientV2(cohere_api_key)
-    
+
     documents = []
     for file_num in source:
         documents.append(corpus_dict[file_num])
 
     response = co.rerank(
-        model = "rerank-multilingual-v3.0",
-        query = qs,
-        documents = documents,
-        top_n = 1
+        model="rerank-multilingual-v3.0", query=qs, documents=documents, top_n=1
     )
 
     time.sleep(cohere_api_wait_time)
-    
+
     return source[response.results[0].index]
+
 
 def cohere_rerank(
     qs_ref,
@@ -55,5 +56,5 @@ def cohere_rerank(
             answer_dict["answers"].append({"qid": q_dict["qid"], "retrieve": retrieved})
         else:
             raise ValueError("Something went wrong")  # 如果過程有問題，拋出錯誤
-        
+
     return answer_dict

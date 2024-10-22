@@ -1,9 +1,9 @@
 """IO functions for the main script."""
 
-import os
 import json
-import pdfplumber  # 用於從PDF文件中提取文字的工具
+import os
 
+import pdfplumber  # 用於從PDF文件中提取文字的工具
 from tqdm import tqdm
 
 
