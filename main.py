@@ -7,6 +7,7 @@ from models.bm25_retrieve import bm25_rerank
 from models.cohere_retrieve import cohere_rerank
 from models.conan import conan_rerank
 from models.qwen import qwen_rerank
+from models.zhinao import zhinao_rerank
 
 
 def parse_arguments():
@@ -27,7 +28,7 @@ def parse_arguments():
     parser.add_argument(
         "--output_path",
         type=str,
-        default="datasets//dataset/preliminary/pred_retrieve.json",
+        default="datasets/dataset/preliminary/pred_retrieve.json",
         help="輸出符合參賽格式的答案路徑",
     )  # 答案輸出的路徑
     parser.add_argument(
@@ -54,6 +55,8 @@ def exp(exp_args: argparse.Namespace):
         model = qwen_rerank
     elif exp_args.model == "conan":
         model = conan_rerank
+    elif exp_args.model == "zhinao":
+        model = zhinao_rerank
     else:
         raise ValueError("Model not supported.")
 
