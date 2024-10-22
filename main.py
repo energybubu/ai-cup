@@ -6,7 +6,7 @@ import main_io
 from models.bm25_retrieve import bm25_rerank
 from models.cohere_retrieve import cohere_rerank
 from models.conan import conan_rerank
-from models.qwen import qwen
+from models.qwen import qwen_rerank
 
 
 def parse_arguments():
@@ -51,7 +51,7 @@ def exp(exp_args: argparse.Namespace):
     elif exp_args.model == "cohere":
         model = cohere_rerank
     elif exp_args.model == "qwen":
-        model = qwen
+        model = qwen_rerank
     elif exp_args.model == "conan":
         model = conan_rerank
     else:
