@@ -4,6 +4,7 @@ from rank_bm25 import BM25Okapi  # 使用BM25演算法進行文件檢索
 
 # 根據查詢語句和指定的來源，檢索答案
 def BM25_retrieve(qs, source, corpus_dict):
+    print(source, source[0])
     filtered_corpus = [corpus_dict[int(file)] for file in source]
 
     # [TODO] 可自行替換其他檢索方式，以提升效能
