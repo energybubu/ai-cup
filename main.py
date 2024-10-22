@@ -5,6 +5,7 @@ import argparse
 import main_io
 from models.bm25_retrieve import bm25_rerank
 from models.cohere_retrieve import cohere_rerank
+from models.conan import conan_rerank
 from models.qwen import qwen
 
 
@@ -51,6 +52,8 @@ def exp(exp_args: argparse.Namespace):
         model = cohere_rerank
     elif exp_args.model == "qwen":
         model = qwen
+    elif exp_args.model == "conan":
+        model = conan_rerank
     else:
         raise ValueError("Model not supported.")
 

@@ -1,50 +1,49 @@
-"""BM25 Retrieve Module."""
+"""Conan Model."""
 
-import jieba  # 用於中文文本分詞
-from rank_bm25 import BM25Okapi  # 使用BM25演算法進行文件檢索
+import torch
+from sentence_transformers import SentenceTransformer
 
 
-# 根據查詢語句和指定的來源，檢索答案
-def bm25_retrieve(qs, source, corpus_dict):
-    """BM25 Retrieve Function."""
+def conan_retrieve(query, source, corpus_dict):
+    """Conan Retrieve Function."""
     filtered_corpus = [corpus_dict[int(file)] for file in source]
-
-    # [TODO] 可自行替換其他檢索方式，以提升效能
-
-    tokenized_corpus = [
-        list(jieba.cut_for_search(doc)) for doc in filtered_corpus
-    ]  # 將每篇文檔進行分詞
-    bm25 = BM25Okapi(tokenized_corpus)  # 使用BM25演算法建立檢索模型
-    tokenized_query = list(jieba.cut_for_search(qs))  # 將查詢語句進行分詞
-    ans = bm25.get_top_n(
-        tokenized_query, list(filtered_corpus), n=1
-    )  # 根據查詢語句檢索，返回最相關的文檔，其中n為可調整項
-    a = ans[0]
-    # 找回與最佳匹配文本相對應的檔案名
-    res = [key for key, value in corpus_dict.items() if value == a]
+    model = SentenceTransformer("TencentBAC/Conan-embedding-v1")
+    # 將文檔轉換為向量
+    corpus_embeddings = model.encode(filtered_corpus, convert_to_tensor=True)
+    # 將查詢語句轉換為向量
+    query_embedding = model.encode(query, convert_to_tensor=True)
+    # 計算查詢語句與文檔的相似度
+    cos_scores = torch.nn.functional.cosine_similarity(
+        query_embedding, corpus_embeddings
+    )
+    # 找出最相似的文檔
+    top_results = torch.topk(cos_scores, k=1)
+    print(top_results)
+    res = [key for key, value in corpus_dict.items() if value == top_results.indices[0]]
+    print(res)
     return res[0]  # 回傳檔案名
 
 
-def bm25_rerank(
+def conan_rerank(
     qs_ref,
     corpus_dict_insurance,
     corpus_dict_finance,
     key_to_source_dict,
 ):
-    """BM25 Rerank Function."""
+    """Conan Rerank Function."""
     answer_dict = {"answers": []}  # 初始化字典
 
     for q_dict in qs_ref["questions"]:
         if q_dict["category"] == "finance":
             # 進行檢索
-            retrieved = bm25_retrieve(
+            retrieved = conan_retrieve(
                 q_dict["query"], q_dict["source"], corpus_dict_finance
             )
             # 將結果加入字典
             answer_dict["answers"].append({"qid": q_dict["qid"], "retrieve": retrieved})
 
         elif q_dict["category"] == "insurance":
-            retrieved = bm25_retrieve(
+            retrieved = conan_retrieve(
                 q_dict["query"], q_dict["source"], corpus_dict_insurance
             )
             answer_dict["answers"].append({"qid": q_dict["qid"], "retrieve": retrieved})
@@ -55,7 +54,7 @@ def bm25_rerank(
                 for key, value in key_to_source_dict.items()
                 if key in q_dict["source"]
             }
-            retrieved = bm25_retrieve(
+            retrieved = conan_retrieve(
                 q_dict["query"], q_dict["source"], corpus_dict_faq
             )
             answer_dict["answers"].append({"qid": q_dict["qid"], "retrieve": retrieved})
