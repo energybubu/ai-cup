@@ -8,6 +8,12 @@ readme = "README.md"
 [tool.poetry.dependencies]
 python = "^3.10"
 cohere = "^5.11.1"
+numpy = "^2.1.2"
+pandas = "^2.2.3"
+pdfplumber = "^0.11.4"
+tqdm = "^4.66.5"
+rank-bm25 = "^0.2.2"
+jieba = "^0.42.1"
 
 
 [build-system]
