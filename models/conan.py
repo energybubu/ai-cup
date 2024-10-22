@@ -18,10 +18,8 @@ def conan_retrieve(query, source, corpus_dict):
     )
     # 找出最相似的文檔
     top_results = torch.topk(cos_scores, k=1)
-    print(top_results)
-    res = [key for key, value in corpus_dict.items() if value == top_results.indices[0]]
-    print(res)
-    return res[0]  # 回傳檔案名
+    print(top_results.indices[0])
+    return top_results.indices[0].item()
 
 
 def conan_rerank(
