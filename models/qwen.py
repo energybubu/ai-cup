@@ -8,6 +8,8 @@ from transformers import DataCollatorWithPadding, PreTrainedModel, PreTrainedTok
 from transformers.models.qwen2 import Qwen2Config, Qwen2ForSequenceClassification
 from transformers.trainer_pt_utils import LabelSmoother
 
+from models.constant import max_seq_length
+
 IGNORE_TOKEN_ID = LabelSmoother.ignore_index
 
 
@@ -107,12 +109,14 @@ def qwen_retrieve(qs, source, corpus_dict):
     tokenizer = transformers.AutoTokenizer.from_pretrained(
         "neofung/LdIR-Qwen2-reranker-1.5B",
         padding_side="right",
+        model_max_length=max_seq_length,
     )
 
     config = Qwen2Config.from_pretrained(
         "neofung/LdIR-Qwen2-reranker-1.5B",
         trust_remote_code=True,
         bf16=True,
+        max_position_embeddings=max_seq_length,  # Ensure the model's config allows 2048 tokens
     )
 
     model = Qwen2ForSequenceClassification.from_pretrained(
@@ -126,7 +130,7 @@ def qwen_retrieve(qs, source, corpus_dict):
     documents = [corpus_dict[id] for id in source]
     pairs = [[qs, doc] for doc in documents]
 
-    scores = model.compute_score(pairs)
+    scores = model.compute_score(pairs, max_length=2048)
     best_idx = np.argmax(scores)
     return source[best_idx]
 

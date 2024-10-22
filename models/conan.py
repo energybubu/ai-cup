@@ -3,14 +3,11 @@
 import torch
 from sentence_transformers import SentenceTransformer
 
-from models.constant import max_seq_length
-
 
 def conan_retrieve(query, source, corpus_dict):
     """Conan Retrieve Function."""
     filtered_corpus = [corpus_dict[int(file)] for file in source]
     model = SentenceTransformer("TencentBAC/Conan-embedding-v1")
-    model.max_seq_length = max_seq_length
     # 將文檔轉換為向量
     corpus_embeddings = model.encode(filtered_corpus, convert_to_tensor=True)
     # 將查詢語句轉換為向量
