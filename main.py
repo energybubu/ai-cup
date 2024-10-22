@@ -1,6 +1,7 @@
 """Main function of the project."""
 
 import argparse
+
 import main_io
 from models.bm25_retrieve import bm25_rerank
 from models.cohere_retrieve import cohere_rerank
@@ -13,21 +14,28 @@ def parse_arguments():
     parser.add_argument(
         "--question_path",
         type=str,
-        required=True,
+        default="datasets/dataset/preliminary/questions_example.json",
         help="讀取發布題目路徑",
     )  # 問題文件的路徑
     parser.add_argument(
         "--source_path",
         type=str,
-        required=True,
+        default="datasets/reference",
         help="讀取參考資料路徑",
     )  # 參考資料的路徑
     parser.add_argument(
         "--output_path",
         type=str,
-        required=True,
+        default="datasets//dataset/preliminary/pred_retrieve.json",
         help="輸出符合參賽格式的答案路徑",
     )  # 答案輸出的路徑
+    parser.add_argument(
+        "--model",
+        type=str,
+        required=True,
+        default="bm25",
+        help="選擇模型",
+    )
 
     return parser.parse_args()  # 解析參數
 
