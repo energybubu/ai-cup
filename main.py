@@ -2,7 +2,7 @@
 
 import argparse
 
-import main_io
+import data.io as io
 from models.bm25_retrieve import bm25_rerank
 from models.cohere_retrieve import cohere_rerank
 from models.conan import conan_rerank
@@ -45,7 +45,7 @@ def parse_arguments():
 def exp(exp_args: argparse.Namespace):
     """Main Experiment Function."""
     qs_ref, corpus_dict_insurance, corpus_dict_finance, key_to_source_dict = (
-        main_io.parse_input(exp_args)
+        io.parse_input(exp_args)
     )
     if exp_args.model == "bm25":
         model = bm25_rerank
@@ -63,7 +63,7 @@ def exp(exp_args: argparse.Namespace):
     answer_dict = model(
         qs_ref, corpus_dict_insurance, corpus_dict_finance, key_to_source_dict
     )
-    main_io.write_answer_to_json(exp_args, answer_dict)
+    io.write_answer_to_json(exp_args, answer_dict)
 
 
 if __name__ == "__main__":
