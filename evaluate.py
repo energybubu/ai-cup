@@ -26,19 +26,36 @@ def parse_arguments():
 
 def evaluate(args):
     with open(args.question_path) as f:
-        qs_ref = json.load(f)
-        
+        qs_ref = json.load(f)['questions']
+        sources = {
+            q['qid']: q['source'] for q in qs_ref
+        }
+
     with open(args.pred_path) as f:
-        pred = json.load(f)
+        pred = json.load(f)['answers']
+        pred = {
+            p['qid']: p['retrieve'] for p in pred
+        }
         
     with open(args.gt_path) as f:
-        gt = json.load(f)
+        gt = json.load(f)['ground_truths']
+        gt = {
+            g['qid']: g['retrieve'] for g in gt
+        }
 
-    assert len(pred) == len(gt)
+    assert set(pred.keys()) == set(gt.keys()), "Prediction and ground truth have different qids."
+    assert len(pred) == len(gt) == 150, "Prediction and ground truth have wrong number of qids."
+
     correct = 0
-    for pred_item, gt_item in zip(pred, gt):
-        if pred_item["qid"] == gt_item["qid"] and pred_item["retrieve"] == gt_item["retrieve"]:
+    for qid in pred.keys():
+        assert pred[qid] in sources[qid], f"Prediction with qid {qid} does not exist in the sources."
+        if pred[qid] == gt[qid]:
             correct += 1
+
+    print(f"Accuracy: {correct/len(pred):.2f}")
+
+    
+    
 
 if __name__ == "__main__":
     args = parse_arguments()
