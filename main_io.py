@@ -60,7 +60,7 @@ def parse_input(args):
 
 
 def write_answer_to_json(args, answer_dict):
-
+    """Write the answer dictionary to a JSON file."""
     # 將答案字典保存為json文件
     with open(args.output_path, "w", encoding="utf8") as f:
         json.dump(
