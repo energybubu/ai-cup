@@ -34,6 +34,8 @@ def read_pdf(pdf_loc, page_infos: list = None):
             pdf_text += text
     pdf.close()  # 關閉PDF文件
 
+    pdf_text = pdf_text.replace('\n', '')
+
     return pdf_text  # 返回萃取出的文本
 
 

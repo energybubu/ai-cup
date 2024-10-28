@@ -15,6 +15,8 @@ from transformers.trainer_pt_utils import LabelSmoother
 
 from models.constant import max_seq_length
 
+from data.translate import *
+
 IGNORE_TOKEN_ID = LabelSmoother.ignore_index
 
 
@@ -112,7 +114,8 @@ class FlagRerankerCustom:
 
 def qwen_retrieve(model, qs, source, corpus_dict):
     documents = [corpus_dict[id] for id in source]
-    pairs = [[qs, doc] for doc in documents]
+    # pairs = [[qs, doc] for doc in documents]
+    pairs = [[trad2simp(qs), trad2simp(doc)] for doc in documents]
 
     scores = model.compute_score(pairs, max_length=2048)
     best_idx = np.argmax(scores)
