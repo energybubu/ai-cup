@@ -6,15 +6,42 @@ import os
 import pdfplumber  # 用於從PDF文件中提取文字的工具
 from tqdm import tqdm
 
+CACHE_DIR = ".cache/"
+
+def read_cache(doc_id, category):
+    cache_path = os.path.join(CACHE_DIR, f"{category}/{doc_id}.txt")
+    if os.path.exists(cache_path):
+        with open(cache_path, "r") as f:
+            return f.read()
+
+    return None
+
+def save_cache(pdf_text, doc_id, category):
+    os.makedirs(CACHE_DIR, exist_ok=True)
+    os.makedirs(os.path.join(CACHE_DIR, category), exist_ok=True)
+    
+    cache_path = os.path.join(CACHE_DIR, f"{category}/{doc_id}.txt")
+    with open(cache_path, "w") as f:
+        f.write(pdf_text)
 
 # 載入參考資料，返回一個字典，key為檔案名稱，value為PDF檔內容的文本
-def load_data(source_path):
+def load_data(source_path, use_cache):
     """Load data from the source path."""
     masked_file_ls = os.listdir(source_path)  # 獲取資料夾中的檔案列表
-    corpus_dict = {
-        int(file.replace(".pdf", "")): read_pdf(os.path.join(source_path, file))
-        for file in tqdm(masked_file_ls)
-    }  # 讀取每個PDF文件的文本，並以檔案名作為鍵，文本內容作為值存入字典
+
+    corpus_dict = {}
+    for file in tqdm(masked_file_ls):
+        doc_id = int(file.replace(".pdf", ""))
+        category = "insurance" if "insurance" in source_path else "finance"
+        if use_cache and (cached_pdf_text := read_cache(doc_id, category)):
+            pdf_text = cached_pdf_text
+        else:
+            pdf_text = read_pdf(os.path.join(source_path, file))
+
+        corpus_dict[doc_id] = pdf_text
+
+        save_cache(pdf_text, doc_id, category)
+
     return corpus_dict
 
 
@@ -47,10 +74,10 @@ def parse_input(args):
     source_path_insurance = os.path.join(
         args.source_path, "insurance"
     )  # 設定參考資料路徑
-    corpus_dict_insurance = load_data(source_path_insurance)
+    corpus_dict_insurance = load_data(source_path_insurance, args.use_cache)
 
     source_path_finance = os.path.join(args.source_path, "finance")  # 設定參考資料路徑
-    corpus_dict_finance = load_data(source_path_finance)
+    corpus_dict_finance = load_data(source_path_finance, args.use_cache)
 
     with open(os.path.join(args.source_path, "faq/pid_map_content.json"), "rb") as f_s:
         key_to_source_dict = json.load(f_s)  # 讀取參考資料文件

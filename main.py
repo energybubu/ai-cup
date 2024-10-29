@@ -39,6 +39,11 @@ def parse_arguments():
         default="bm25",
         help="選擇模型",
     )
+    parser.add_argument(
+        "--use_cache",
+        action=argparse.BooleanOptionalAction,
+        help="use cached preprocessed documents"
+    )
 
     return parser.parse_args()  # 解析參數
 

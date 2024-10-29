@@ -1,5 +1,6 @@
 run.sh
 temp.py
+.cache/
 
 # training data
 datasets/
