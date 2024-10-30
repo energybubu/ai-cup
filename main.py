@@ -9,6 +9,7 @@ from models.conan import conan_rerank
 from models.qwen import qwen_rerank
 from models.zpoint import zpoint_rerank
 from models.hybrid import hybrid_rerank
+from models.qwen_gpt import qwen_gpt_rerank
 
 
 def parse_arguments():
@@ -62,6 +63,8 @@ def get_rerank_model(model_name: str):
         return zpoint_rerank
     elif model_name == "hybrid":
         return hybrid_rerank
+    elif model_name == "qwen_gpt":
+        return qwen_gpt_rerank
 
     raise ValueError(f"Model {model_name} is not supported.")
 

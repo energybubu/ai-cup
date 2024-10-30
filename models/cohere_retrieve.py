@@ -2,12 +2,15 @@ import time
 
 import cohere
 from tqdm import tqdm
+from dotenv import load_dotenv
+import os
 
 from models.constant import *
 
 
 def cohere_retrieve(qs, source, corpus_dict):
-    co = cohere.ClientV2(cohere_api_key)
+    load_dotenv()
+    co = cohere.ClientV2(os.getenv('COHERE_API_KEY'))
 
     documents = []
     for file_num in source:
