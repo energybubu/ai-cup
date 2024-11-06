@@ -16,7 +16,8 @@ compare_template = """
 文章B：「{doc2}」
 
 若文章A更適合回答客戶的問題，請輸出一個字母「A」；若文章B更適合回答客戶的問題，請輸出一個字母「B」。不要輸出多餘的資訊。
-"""
+""".strip()
+
 
 def gpt_rerank(question, doc1, doc2):
     load_dotenv()

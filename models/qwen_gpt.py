@@ -16,7 +16,7 @@ from transformers.trainer_pt_utils import LabelSmoother
 from models.constant import max_seq_length
 from models.qwen import FlagRerankerCustom
 
-from data.translate import *
+from data.translate import trad2simp
 
 from models.gpt import gpt_rerank
 from models.constant import gpt_rerank_threshold
@@ -26,7 +26,7 @@ def qwen_gpt_retrieve(model, qs, source, corpus_dict):
     # pairs = [[qs, doc] for doc in documents]
     pairs = [[trad2simp(qs), trad2simp(doc)] for doc in documents]
 
-    scores = model.compute_score(pairs, max_length=2048)
+    scores = model.compute_score(pairs, max_length=512, overlap=400)
     best_idx = np.argmax(scores)
 
     ## get the second best score

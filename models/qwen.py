@@ -14,8 +14,9 @@ from transformers import (
 from transformers.trainer_pt_utils import LabelSmoother
 
 from models.constant import max_seq_length
+from data.preprocess import faq2text
 
-from data.translate import *
+from data.translate import trad2simp
 
 IGNORE_TOKEN_ID = LabelSmoother.ignore_index
 
@@ -24,27 +25,40 @@ def preprocess(
     sources,
     tokenizer: transformers.PreTrainedTokenizer,
     max_len: int = 1024,
-) -> Dict:
+    overlap: int = 256,
+    tokenize_scale = 1.3
+) -> Tuple[Dict, List[int]]:
     # Apply prompt templates
     input_ids, attention_masks = [], []
+    mapping = []
+    max_len = int(max_len * tokenize_scale)
+    overlap = int(overlap * tokenize_scale)
     for i, source in enumerate(sources):
-        messages = [{"role": "user", "content": "\n\n".join(source)}]
-        text = tokenizer.apply_chat_template(
-            messages, tokenize=False, add_generation_prompt=True
-        )
-        model_inputs = tokenizer([text])
-        input_id = model_inputs["input_ids"][0]
-        attention_mask = model_inputs["attention_mask"][0]
-        if len(input_id) > max_len:
-            ## last five tokens: <|im_end|>(151645), \n(198), <|im_start|>(151644), assistant(77091), \n(198)
-            diff = len(input_id) - max_len
-            input_id = input_id[: -5 - diff] + input_id[-5:]
-            attention_mask = attention_mask[: -5 - diff] + attention_mask[-5:]
-            assert len(input_id) == max_len
-        input_ids.append(input_id)
-        attention_masks.append(attention_mask)
+        query, document = source
+        for j in range(0, max(len(document) - overlap, 1), max_len - overlap):
+            mapping.append(i)
+            messages = [{"role": "user", "content": f"{query}\n\n{document[j:j+max_len]}"}]
+            text = tokenizer.apply_chat_template(
+                messages, tokenize=False, add_generation_prompt=True
+            )
+            model_inputs = tokenizer([text])
+            input_id = model_inputs["input_ids"][0]
+            attention_mask = model_inputs["attention_mask"][0]
 
-    return dict(input_ids=input_ids, attention_mask=attention_masks)
+            assert len(input_id) <= 2048
+            input_ids.append(input_id)
+            attention_masks.append(attention_mask)
+
+        # if len(input_id) > max_len:
+        #     ## last five tokens: <|im_end|>(151645), \n(198), <|im_start|>(151644), assistant(77091), \n(198)
+        #     diff = len(input_id) - max_len
+        #     input_id = input_id[: -5 - diff] + input_id[-5:]
+        #     attention_mask = attention_mask[: -5 - diff] + attention_mask[-5:]
+        #     assert len(input_id) == max_len
+        # input_ids.append(input_id)
+        # attention_masks.append(attention_mask)
+
+    return dict(input_ids=input_ids, attention_mask=attention_masks), mapping
 
 
 class FlagRerankerCustom:
@@ -83,6 +97,7 @@ class FlagRerankerCustom:
         sentence_pairs: Union[List[Tuple[str, str]], Tuple[str, str]],
         batch_size: int = 64,
         max_length: int = 1024,
+        overlap: int = 256
     ) -> List[float]:
         if self.num_gpus > 0:
             batch_size = batch_size * self.num_gpus
@@ -92,24 +107,35 @@ class FlagRerankerCustom:
             sentence_pairs = [sentence_pairs]
 
         all_scores = []
+        all_mapping = []
         for start_index in tqdm(
             range(0, len(sentence_pairs), batch_size),
             desc="Compute Scores",
             disable=True,
         ):
             sentences_batch = sentence_pairs[start_index : start_index + batch_size]
-            inputs = preprocess(
-                sources=sentences_batch, tokenizer=self.tokenizer, max_len=max_length
+            inputs, mapping = preprocess(
+                sources=sentences_batch,
+                tokenizer=self.tokenizer,
+                max_len=max_length,
+                overlap=overlap
             )
+            mapping = map(lambda x: x+start_index, mapping)
+            all_mapping.extend(mapping)
             inputs = [dict(zip(inputs, t)) for t in zip(*inputs.values())]
             inputs = self.data_collator(inputs).to(self.device)
             scores = self.model(**inputs, return_dict=True).logits
             scores = scores.squeeze()
             all_scores.extend(scores.detach().to(torch.float).cpu().numpy().tolist())
 
-        if len(all_scores) == 1:
-            return all_scores[0]
-        return all_scores
+        ind = 0
+        unique_scores = []
+        for i in range(len(sentence_pairs)):
+            pre = ind
+            while ind < len(all_scores) and all_mapping[ind] == i:
+                ind += 1
+            unique_scores.append(max(all_scores[pre:ind]))
+        return unique_scores
 
 
 def qwen_retrieve(model, qs, source, corpus_dict):
@@ -117,7 +143,7 @@ def qwen_retrieve(model, qs, source, corpus_dict):
     # pairs = [[qs, doc] for doc in documents]
     pairs = [[trad2simp(qs), trad2simp(doc)] for doc in documents]
 
-    scores = model.compute_score(pairs, max_length=2048)
+    scores = model.compute_score(pairs, max_length=512, overlap=400)
     best_idx = np.argmax(scores)
     return source[best_idx]
 
@@ -167,7 +193,7 @@ def qwen_rerank(
 
         elif q_dict["category"] == "faq":
             corpus_dict_faq = {
-                key: str(value)
+                key: faq2text(value)
                 for key, value in key_to_source_dict.items()
                 if key in q_dict["source"]
             }
