@@ -6,7 +6,10 @@ import os
 import pdfplumber  # 用於從PDF文件中提取文字的工具
 from tqdm import tqdm
 
+from data.preprocess import remove_non_used_chars
+
 CACHE_DIR = ".cache/"
+
 
 def read_cache(doc_id, category):
     cache_path = os.path.join(CACHE_DIR, f"{category}/{doc_id}.txt")
@@ -16,13 +19,15 @@ def read_cache(doc_id, category):
 
     return None
 
+
 def save_cache(pdf_text, doc_id, category):
     os.makedirs(CACHE_DIR, exist_ok=True)
     os.makedirs(os.path.join(CACHE_DIR, category), exist_ok=True)
-    
+
     cache_path = os.path.join(CACHE_DIR, f"{category}/{doc_id}.txt")
     with open(cache_path, "w") as f:
         f.write(pdf_text)
+
 
 # 載入參考資料，返回一個字典，key為檔案名稱，value為PDF檔內容的文本
 def load_data(source_path, use_cache):
@@ -59,9 +64,11 @@ def read_pdf(pdf_loc, page_infos: list = None):
         text = page.extract_text()  # 提取頁面的文本內容
         if text:
             pdf_text += text
-    pdf.close()  # 關閉PDF文件
 
-    pdf_text = pdf_text.replace('\n', '')
+    pdf.close()  # 關閉PDF文件
+    pdf_text = remove_non_used_chars(pdf_text)
+
+    # pdf_text = pdf_text.replace("\n", " ")  # 將換行符替換為空格
 
     return pdf_text  # 返回萃取出的文本
 
