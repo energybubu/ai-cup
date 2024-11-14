@@ -4,6 +4,11 @@
 OPENAI_API_KEY = "your-openai-api-key"
 ```
 ## Run
+- `--model`: The model to be used for the experiment. The default model is `qwen_gpt`.
+- `--output_path`: The path where the output predictions will be saved.
+- `--question_path`: The path to the JSON file containing the questions.
+- `--source_path`: The path to the directory containing the reference documents.
+- `--use_cache`: A flag indicating whether to use cached preprocessed documents.
 ```shell
 python main.py \
   --model qwen_gpt \
