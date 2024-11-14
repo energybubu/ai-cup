@@ -12,6 +12,7 @@ CACHE_DIR = ".cache/"
 
 
 def read_cache(doc_id, category):
+    """Read the cache file."""
     cache_path = os.path.join(CACHE_DIR, f"{category}/{doc_id}.txt")
     if os.path.exists(cache_path):
         with open(cache_path, "r") as f:
@@ -21,6 +22,7 @@ def read_cache(doc_id, category):
 
 
 def save_cache(pdf_text, doc_id, category):
+    """Save the cache file."""
     os.makedirs(CACHE_DIR, exist_ok=True)
     os.makedirs(os.path.join(CACHE_DIR, category), exist_ok=True)
 

@@ -1,27 +1,21 @@
-from typing import Dict, List, Tuple, Union
+"""Qwen GPT Rerank Function."""
 
 import numpy as np
-import torch
 import transformers
 from tqdm import tqdm
 from transformers import (
-    DataCollatorWithPadding,
-    PreTrainedModel,
-    PreTrainedTokenizer,
     Qwen2Config,
     Qwen2ForSequenceClassification,
 )
-from transformers.trainer_pt_utils import LabelSmoother
-
-from models.constant import max_seq_length
-from models.qwen import FlagRerankerCustom
 
 from data.translate import trad2simp
-
+from models.constant import gpt_rerank_threshold, max_seq_length
 from models.gpt import gpt_rerank
-from models.constant import gpt_rerank_threshold
+from models.qwen import FlagRerankerCustom
+
 
 def qwen_gpt_retrieve(model, qs, source, corpus_dict):
+    """Qwen Retrieve Function."""
     documents = [corpus_dict[id] for id in source]
     # pairs = [[qs, doc] for doc in documents]
     pairs = [[trad2simp(qs), trad2simp(doc)] for doc in documents]
@@ -32,12 +26,12 @@ def qwen_gpt_retrieve(model, qs, source, corpus_dict):
     ## get the second best score
     best_score = scores[best_idx]
     scores[best_idx] = -np.inf
-    second_best_idx= np.argmax(scores)
+    second_best_idx = np.argmax(scores)
     if best_score - scores[second_best_idx] < gpt_rerank_threshold:
         result = gpt_rerank(qs, documents[best_idx], documents[second_best_idx])
-        if result == 'first':
+        if result == "first":
             return source[best_idx]
-        elif result == 'second':
+        elif result == "second":
             return source[second_best_idx]
 
     return source[best_idx]
@@ -49,6 +43,7 @@ def qwen_gpt_rerank(
     corpus_dict_finance,
     key_to_source_dict,
 ):
+    """Qwen Rerank Function."""
     answer_dict = {"answers": []}  # 初始化字典
     tokenizer = transformers.AutoTokenizer.from_pretrained(
         "neofung/LdIR-Qwen2-reranker-1.5B",

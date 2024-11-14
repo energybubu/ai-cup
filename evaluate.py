@@ -1,8 +1,11 @@
+"""Evaluate the model."""
+
 import argparse
 import json
 
 
 def parse_arguments():
+    """Parse the arguments from the command line."""
     parser = argparse.ArgumentParser(description="Evaluate the model.")
     parser.add_argument(
         "--question_path",
@@ -27,6 +30,7 @@ def parse_arguments():
 
 
 def evaluate(args):
+    """Evaluate the model."""
     with open(args.question_path) as f:
         qs_ref = json.load(f)["questions"]
         sources = {q["qid"]: q["source"] for q in qs_ref}
@@ -47,12 +51,7 @@ def evaluate(args):
         len(pred) == len(gt) == 150
     ), "Prediction and ground truth have wrong number of qids."
 
-    correct_cnt = {
-        "all": [],
-        "insurance": [],
-        "finance": [],
-        "faq": []
-    }
+    correct_cnt = {"all": [], "insurance": [], "finance": [], "faq": []}
     for qid in pred.keys():
         assert (
             pred[qid] in sources[qid]
@@ -61,8 +60,12 @@ def evaluate(args):
         correct_cnt[q_cat[qid]].append(pred[qid] == gt[qid])
 
     print(f"Total Accuracy: {sum(correct_cnt["all"])/len(correct_cnt["all"]):.2f}")
-    print(f"Insurance Accuracy: {sum(correct_cnt["insurance"])/len(correct_cnt["insurance"]):.2f}")
-    print(f"Finance Accuracy: {sum(correct_cnt["finance"])/len(correct_cnt["finance"]):.2f}")
+    print(
+        f"Insurance Accuracy: {sum(correct_cnt["insurance"])/len(correct_cnt["insurance"]):.2f}"
+    )
+    print(
+        f"Finance Accuracy: {sum(correct_cnt["finance"])/len(correct_cnt["finance"]):.2f}"
+    )
     print(f"FAQ Accuracy: {sum(correct_cnt["faq"])/len(correct_cnt["faq"]):.2f}")
 
 

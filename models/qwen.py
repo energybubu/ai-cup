@@ -1,3 +1,5 @@
+"""Qwen Reranker Module."""
+
 from typing import Dict, List, Tuple, Union
 
 import numpy as np
@@ -13,10 +15,9 @@ from transformers import (
 )
 from transformers.trainer_pt_utils import LabelSmoother
 
-from models.constant import max_seq_length
 from data.preprocess import faq2text
-
 from data.translate import trad2simp
+from models.constant import max_seq_length
 
 IGNORE_TOKEN_ID = LabelSmoother.ignore_index
 
@@ -26,8 +27,9 @@ def preprocess(
     tokenizer: transformers.PreTrainedTokenizer,
     max_len: int = 1024,
     overlap: int = 256,
-    tokenize_scale = 1.3
+    tokenize_scale=1.3,
 ) -> Tuple[Dict, List[int]]:
+    """Preprocess the sources."""
     # Apply prompt templates
     input_ids, attention_masks = [], []
     mapping = []
@@ -37,7 +39,9 @@ def preprocess(
         query, document = source
         for j in range(0, max(len(document) - overlap, 1), max_len - overlap):
             mapping.append(i)
-            messages = [{"role": "user", "content": f"{query}\n\n{document[j:j+max_len]}"}]
+            messages = [
+                {"role": "user", "content": f"{query}\n\n{document[j:j+max_len]}"}
+            ]
             text = tokenizer.apply_chat_template(
                 messages, tokenize=False, add_generation_prompt=True
             )
@@ -62,12 +66,15 @@ def preprocess(
 
 
 class FlagRerankerCustom:
+    """Flag Reranker Custom Class."""
+
     def __init__(
         self,
         model: PreTrainedModel,
         tokenizer: PreTrainedTokenizer,
         use_fp16: bool = False,
     ) -> None:
+        """Initialize the FlagRerankerCustom class."""
         self.tokenizer = tokenizer
         self.model = model
         self.data_collator = DataCollatorWithPadding(tokenizer=tokenizer)
@@ -97,8 +104,9 @@ class FlagRerankerCustom:
         sentence_pairs: Union[List[Tuple[str, str]], Tuple[str, str]],
         batch_size: int = 64,
         max_length: int = 1024,
-        overlap: int = 256
+        overlap: int = 256,
     ) -> List[float]:
+        """Compute the scores of the sentence pairs."""
         if self.num_gpus > 0:
             batch_size = batch_size * self.num_gpus
 
@@ -118,9 +126,9 @@ class FlagRerankerCustom:
                 sources=sentences_batch,
                 tokenizer=self.tokenizer,
                 max_len=max_length,
-                overlap=overlap
+                overlap=overlap,
             )
-            mapping = map(lambda x: x+start_index, mapping)
+            mapping = map(lambda x: x + start_index, mapping)
             all_mapping.extend(mapping)
             inputs = [dict(zip(inputs, t)) for t in zip(*inputs.values())]
             inputs = self.data_collator(inputs).to(self.device)
@@ -139,6 +147,7 @@ class FlagRerankerCustom:
 
 
 def qwen_retrieve(model, qs, source, corpus_dict):
+    """Qwen Retrieve Function."""
     documents = [corpus_dict[id] for id in source]
     # pairs = [[qs, doc] for doc in documents]
     pairs = [[trad2simp(qs), trad2simp(doc)] for doc in documents]
@@ -154,6 +163,7 @@ def qwen_rerank(
     corpus_dict_finance,
     key_to_source_dict,
 ):
+    """Qwen Rerank Function."""
     answer_dict = {"answers": []}  # 初始化字典
     tokenizer = transformers.AutoTokenizer.from_pretrained(
         "neofung/LdIR-Qwen2-reranker-1.5B",

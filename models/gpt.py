@@ -1,12 +1,13 @@
+"""Implement GPT Rerank Function."""
+
 from dotenv import load_dotenv
 from openai import OpenAI
-import os
 
-system_message = """
+SYSTEM_MSG = """
 你是一位華南銀行的客服。
 """
 
-compare_template = """
+COMPARE_TEMPLATE = """
 給定一個客戶的詢問，請決定哪一篇文章更適合回答客戶的問題。
 
 詢問：「{question}」
@@ -20,42 +21,42 @@ compare_template = """
 
 
 def gpt_rerank(question, doc1, doc2):
+    """Implement GPT Rerank Function."""
     load_dotenv()
 
     client = OpenAI()
 
-    user_message = compare_template.format(question=question, doc1=doc1, doc2=doc2)
+    user_message = COMPARE_TEMPLATE.format(question=question, doc1=doc1, doc2=doc2)
     completion = client.chat.completions.create(
         model="gpt-4o-mini",
         messages=[
-            {"role": "system", "content": system_message},
+            {"role": "system", "content": SYSTEM_MSG},
             {"role": "user", "content": user_message},
-        ]
+        ],
     )
 
     response = completion.choices[0].message.content
-    assert ('A' in response) ^ ('B' in response)
+    assert ("A" in response) ^ ("B" in response)
 
-    result1 = 'A' in response
+    result1 = "A" in response
 
-    user_message = compare_template.format(question=question, doc1=doc2, doc2=doc1)
+    user_message = COMPARE_TEMPLATE.format(question=question, doc1=doc2, doc2=doc1)
     completion = client.chat.completions.create(
         model="gpt-4o-mini",
         messages=[
-            {"role": "system", "content": system_message},
+            {"role": "system", "content": SYSTEM_MSG},
             {"role": "user", "content": user_message},
-        ]
+        ],
     )
 
     response = completion.choices[0].message.content
-    assert ('A' in response) ^ ('B' in response)
+    assert ("A" in response) ^ ("B" in response)
 
-    result2 = 'B' in response
+    result2 = "B" in response
 
     if result1 and result2:
-        return 'first'
+        return "first"
     elif not result1 and not result2:
-        return 'second'
+        return "second"
     else:
-        return 'equal'
-
+        return "equal"
