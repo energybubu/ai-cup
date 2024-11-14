@@ -6,8 +6,6 @@ import os
 import pdfplumber  # 用於從PDF文件中提取文字的工具
 from tqdm import tqdm
 
-from data.preprocess import remove_non_used_chars
-
 CACHE_DIR = ".cache/"
 
 
@@ -68,9 +66,8 @@ def read_pdf(pdf_loc, page_infos: list = None):
             pdf_text += text
 
     pdf.close()  # 關閉PDF文件
-    pdf_text = remove_non_used_chars(pdf_text)
 
-    # pdf_text = pdf_text.replace("\n", " ")  # 將換行符替換為空格
+    pdf_text = pdf_text.replace("\n", " ")  # 將換行符替換為空格
 
     return pdf_text  # 返回萃取出的文本
 

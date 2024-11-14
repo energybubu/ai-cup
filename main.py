@@ -2,14 +2,9 @@
 
 import argparse
 
-import data.io as io
-from models.bm25_retrieve import bm25_rerank
-from models.cohere_retrieve import cohere_rerank
-from models.conan import conan_rerank
-from models.qwen import qwen_rerank
-from models.zpoint import zpoint_rerank
-from models.hybrid import hybrid_rerank
-from models.qwen_gpt import qwen_gpt_rerank
+import Preprocess.io as io
+from Model.qwen import qwen_rerank
+from Model.qwen_gpt import qwen_gpt_rerank
 
 
 def parse_arguments():
@@ -43,7 +38,7 @@ def parse_arguments():
     parser.add_argument(
         "--use_cache",
         action=argparse.BooleanOptionalAction,
-        help="use cached preprocessed documents"
+        help="use cached preprocessed documents",
     )
 
     return parser.parse_args()  # 解析參數
@@ -51,18 +46,8 @@ def parse_arguments():
 
 def get_rerank_model(model_name: str):
     """Get the model function based on the model name."""
-    if model_name == "bm25":
-        return bm25_rerank
-    elif model_name == "cohere":
-        return cohere_rerank
-    elif model_name == "conan":
-        return conan_rerank
-    elif model_name == "qwen":
+    if model_name == "qwen":
         return qwen_rerank
-    elif model_name == "zpoint":
-        return zpoint_rerank
-    elif model_name == "hybrid":
-        return hybrid_rerank
     elif model_name == "qwen_gpt":
         return qwen_gpt_rerank
 

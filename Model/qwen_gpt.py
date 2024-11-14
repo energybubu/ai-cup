@@ -8,10 +8,10 @@ from transformers import (
     Qwen2ForSequenceClassification,
 )
 
-from data.translate import trad2simp
-from models.constant import gpt_rerank_threshold, max_seq_length
-from models.gpt import gpt_rerank
-from models.qwen import FlagRerankerCustom
+from Preprocess.translate import trad2simp
+from Model.constant import gpt_rerank_threshold, max_seq_length
+from Model.gpt import gpt_rerank
+from Model.qwen import FlagRerankerCustom
 
 
 def qwen_gpt_retrieve(model, qs, source, corpus_dict):

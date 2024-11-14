@@ -15,9 +15,9 @@ from transformers import (
 )
 from transformers.trainer_pt_utils import LabelSmoother
 
-from data.preprocess import faq2text
-from data.translate import trad2simp
-from models.constant import max_seq_length
+from Preprocess.preprocess import faq2text
+from Preprocess.translate import trad2simp
+from Model.constant import max_seq_length
 
 IGNORE_TOKEN_ID = LabelSmoother.ignore_index
 
