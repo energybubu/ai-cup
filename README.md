@@ -8,14 +8,12 @@ OPENAI_API_KEY = "your-openai-api-key"
 - `--output_path`: The path where the output predictions will be saved.
 - `--question_path`: The path to the JSON file containing the questions.
 - `--source_path`: The path to the directory containing the reference documents.
-- `--use_cache`: A flag indicating whether to use cached preprocessed documents.
 ```shell
 python main.py \
   --model qwen_gpt \
   --output_path "pred.json" \
   --question_path "questions_example.json" \
-  --source_path "datasets/reference/" \
-  --use_cache
+  --source_path "datasets/reference/" 
 ```
 ## File Structure
 ```
